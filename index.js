@@ -4,6 +4,7 @@ var isolines = require('turf-isolines'),
     point = require('turf-point'),
     distance = require('turf-distance'),
     extent = require('turf-extent'),
+    inside = require('turf-inside'),
     featureCollection = require('turf-featurecollection'),
     polylineDecode = require('polyline').decode,
     OSRM = require('osrm');
@@ -13,7 +14,23 @@ module.exports = function (center, time, options, done) {
     if (!options.resolution) throw 'resolution is mandatory in options';
     if (!options.network) throw 'network is mandatory in options';
     if (!options.maxspeed) throw 'maxspeed is mandatory in options';
-    var unit = options.unit || 'miles';
+    var unit = options.unit || 'kilometers';
+    var empty_pol = {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            0,
+            0
+          ]
+        ]
+      },
+      "properties": {
+        "name": "empty"
+      }
+    };
+    var exclude = options.exclude || empty_pol;
     if (options && options.draw) {
         this.draw = options.draw;
     } else {
@@ -39,7 +56,7 @@ module.exports = function (center, time, options, done) {
         //compute destination grid
         var targets = grid(bbox, options.resolution);
         targets.features = targets.features.filter(function(feat) {
-            return distance(point(feat.geometry.coordinates[0], feat.geometry.coordinates[1]), centerPt, unit) <= length;
+            return (distance(point(feat.geometry.coordinates[0], feat.geometry.coordinates[1]), centerPt, unit) <= length && !inside(feat,exclude));
         });
         var destinations = featureCollection([]);
 
