@@ -9,7 +9,7 @@ var isolines = require('turf-isolines'),
     polylineDecode = require('polyline').decode,
     OSRM = require('osrm');
 
-module.exports = function (center, time, options, done) {
+module.exports = function (center, times, options, done) {
     if (!options) throw 'options is mandatory';
     if (!options.resolution) throw 'resolution is mandatory in options';
     if (!options.network) throw 'network is mandatory in options';
@@ -35,7 +35,7 @@ module.exports = function (center, time, options, done) {
         this.draw = options.draw;
     } else {
         this.draw = function(destinations) {
-            return isolines(destinations, 'eta', options.resolution, [time]);
+            return isolines(destinations, 'eta', options.resolution, [max_time]);
         };
     }
     this.getIsochrone = function() {
@@ -45,7 +45,8 @@ module.exports = function (center, time, options, done) {
         // this will account for a driver going a bit above the max safe speed
         var centerPt = point(center[0], center[1]);
         var spokes = featureCollection([]);
-        var length = (time/3600) * options.maxspeed;
+        var max_time= Math.max.apply(Math, times);
+        var length = (max_time/3600) * options.maxspeed;
         spokes.features.push(destination(centerPt, length, 180, unit));
         spokes.features.push(destination(centerPt, length, 0, unit));
         spokes.features.push(destination(centerPt, length, 90, unit));
